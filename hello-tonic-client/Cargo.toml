@@ -1,0 +1,24 @@
+[package]
+name                   = "hello-tonic-client"
+description            = "Client for the tonic demo"
+version.workspace      = true
+edition.workspace      = true
+authors.workspace      = true
+license.workspace      = true
+readme.workspace       = true
+homepage.workspace     = true
+homepage.repository    = true
+homepage.documentation = true
+
+[dependencies]
+anyhow             = { workspace = true }
+configured         = { workspace = true }
+prost              = { workspace = true }
+serde              = { workspace = true }
+tokio              = { workspace = true }
+tonic              = { workspace = true }
+
+[build-dependencies]
+anyhow      = { workspace = true }
+tonic-build = { workspace = true }
+walkdir     = { workspace = true }

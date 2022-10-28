@@ -1,0 +1,29 @@
+version: "3"
+services:
+
+  hello-axum:
+    image: hello-axum:latest
+    environment:
+      - RUST_LOG=hello_axum=debug,tower_http=debug
+      - APP__OTLP_EXPORTER_ENDPOINT=http://otel-collector:4317
+      - APP__HELLO_TONIC_CLIENT__ENDPOINT=http://hello-tonic-server:80
+    ports:
+      - "80:80"
+
+  hello-tonic-server:
+    image: hello-tonic-server:latest
+    environment:
+      - RUST_LOG=hello_tonic_server=debug,tower_http=debug
+      - APP__OTLP_EXPORTER_ENDPOINT=http://otel-collector:4317
+    ports:
+      - "90:80"
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.62.1
+    command: [ "--config=/etc/otel-collector-config.yaml" ]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    environment:
+      - TEMPO_BASIC_AUTH
+    ports:
+      - "4317:4317"

@@ -1,0 +1,9 @@
+service-name           = "hello-axum"
+otlp-exporter-endpoint = "http://localhost:4317"
+
+[server]
+addr = "0.0.0.0"
+port = 80
+
+[hello-tonic-client]
+endpoint = "http://127.0.0.1:90"

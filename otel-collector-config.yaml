@@ -1,0 +1,26 @@
+service:
+  pipelines:
+    traces:
+      receivers:
+        - otlp
+      processors:
+        - batch
+      exporters:
+        - otlp
+        - logging
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+
+processors:
+  batch:
+
+exporters:
+  otlp:
+    endpoint: https://tempo-eu-west-0.grafana.net:443
+    headers:
+      authorization: Basic $TEMPO_BASIC_AUTH
+  logging:
+    loglevel: debug

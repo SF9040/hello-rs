@@ -1,0 +1,12 @@
+FROM rust:1-bullseye AS builder
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --assume-yes protobuf-compiler
+WORKDIR /usr/build/hello-rs
+COPY . .
+RUN cargo build --package hello-tonic-server --release
+
+FROM debian:bullseye-slim
+COPY --from=builder /usr/build/hello-rs/target/release/hello-tonic-server /usr/local/bin/hello-tonic-server
+COPY --from=builder /usr/build/hello-rs/hello-tonic-server/config /opt/hello-tonic-server/config
+WORKDIR /opt/hello-tonic-server
+ENTRYPOINT ["hello-tonic-server"]

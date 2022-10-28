@@ -1,0 +1,12 @@
+FROM rust:1-bullseye AS builder
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --assume-yes protobuf-compiler
+WORKDIR /usr/build/hello-rs
+COPY . .
+RUN cargo build --package hello-axum --features proxy --release
+
+FROM debian:bullseye-slim
+COPY --from=builder /usr/build/hello-rs/target/release/hello-axum /usr/local/bin/hello-axum
+COPY --from=builder /usr/build/hello-rs/hello-axum/config /opt/hello-axum/config
+WORKDIR /opt/hello-axum
+ENTRYPOINT ["hello-axum"]
