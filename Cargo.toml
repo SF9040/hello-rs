@@ -19,6 +19,7 @@ futures               = { version = "0" }
 opentelemetry         = { version = "0", default-features = false, features = [ "rt-tokio" ] }
 opentelemetry-otlp    = { version = "0", default-features = false, features = [ "trace", "grpc-tonic" ] }
 prost                 = { version = "0" }
+rand                  = { version = "0" }
 serde                 = { version = "1", features = [ "derive" ] }
 tokio                 = { version = "1", features = [ "full" ] }
 tonic                 = { version = "0" }

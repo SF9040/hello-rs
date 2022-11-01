@@ -17,6 +17,7 @@ futures               = { workspace = true }
 opentelemetry         = { workspace = true }
 opentelemetry-otlp    = { workspace = true }
 prost                 = { workspace = true }
+rand                  = { workspace = true }
 serde                 = { workspace = true }
 tokio                 = { workspace = true }
 tonic                 = { workspace = true }
