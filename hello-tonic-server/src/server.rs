@@ -8,7 +8,7 @@ use self::proto::{
     HelloRequest, HelloResponse,
 };
 use anyhow::{Context, Result};
-use opentelemetry::{global, propagation::Extractor};
+use opentelemetry::{global, propagation::Extractor, trace::TraceContextExt};
 use serde::Deserialize;
 use std::{
     net::{IpAddr, SocketAddr},
@@ -16,13 +16,13 @@ use std::{
 };
 use tokio::time::sleep;
 use tonic::{
-    codegen::http::{header::HeaderName, HeaderMap, Request as CodegenRequest},
+    codegen::http::{header::HeaderName, HeaderMap, Request as HttpRequest},
     transport::{Body, Server},
     Request, Response, Status,
 };
 use tower::ServiceBuilder;
-use tower_http::trace::{DefaultMakeSpan, TraceLayer};
-use tracing::{error, instrument, Level, Span};
+use tower_http::trace::TraceLayer;
+use tracing::{error, field, info_span, instrument, Span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 #[derive(Debug, Clone, Copy, Deserialize)]
@@ -47,13 +47,13 @@ pub async fn run(config: Config) -> Result<()> {
         .layer(
             ServiceBuilder::new()
                 .layer(
-                    TraceLayer::new_for_grpc().make_span_with(
-                        DefaultMakeSpan::new()
-                            .level(Level::INFO)
-                            .include_headers(true),
-                    ),
+                    TraceLayer::new_for_grpc().make_span_with(|request: &HttpRequest<Body>| {
+                        let headers = request.headers();
+                        info_span!("request", ?headers, trace_id = field::Empty)
+                    }),
                 )
-                .map_request(extract_trace_context),
+                .map_request(set_span_parent)
+                .map_request(record_trace_id),
         )
         .add_service(HelloServer::new(this_hello));
 
@@ -112,10 +112,22 @@ impl<'a> Extractor for HeaderExtractor<'a> {
     }
 }
 
-fn extract_trace_context(request: CodegenRequest<Body>) -> CodegenRequest<Body> {
+fn set_span_parent(request: HttpRequest<Body>) -> HttpRequest<Body> {
+    let span = Span::current();
+
     let parent_context = global::get_text_map_propagator(|propagator| {
         propagator.extract(&HeaderExtractor(request.headers()))
     });
-    Span::current().set_parent(parent_context);
+    span.set_parent(parent_context);
+
+    request
+}
+
+fn record_trace_id(request: HttpRequest<Body>) -> HttpRequest<Body> {
+    let span = Span::current();
+
+    let trace_id = span.context().span().span_context().trace_id();
+    span.record("trace_id", trace_id.to_string());
+
     request
 }

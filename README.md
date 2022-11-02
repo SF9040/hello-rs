@@ -9,11 +9,11 @@ Simple HTTP/JSON service demo built with [auxm](https://github.com/tokio-rs/axum
 ### Running the service
 
 ```
-RUST_LOG=hello_axum=debug,tower_http=debug \
+RUST_LOG=hello_axum=debug,tower_http=info \
   CONFIG_DIR=hello-axum/config \
   APP__CLIENT_TONIC_CLIENT__endpoint=http://localhost:90 \
   cargo run -p hello-axum --features proxy |\
-  jq '{timestamp, level, target, message: .fields.message}'
+  jq '{timestamp, level, target, fields}'
 ```
 
 ## hello-tonic-server
@@ -23,11 +23,11 @@ Simple gPRC demo service built with [tonic](https://github.com/hyperium/tonic).
 ### Running the service
 
 ```
-RUST_LOG=hello_tonic_server=debug,tower_http=debug \
+RUST_LOG=hello_tonic_server=debug,tower_http=info \
   CONFIG_DIR=hello-tonic-server/config \
   APP__SERVER__PORT=90 \
   cargo run -p hello-tonic-server |\
-  jq '{timestamp, level, target, message: .fields.message}'
+  jq '{timestamp, level, target, fields}'
 ```
 
 To test the client use `grpcurl`:

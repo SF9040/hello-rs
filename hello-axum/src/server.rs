@@ -1,14 +1,18 @@
 #[cfg(feature = "proxy")]
 use crate::hello_tonic_client::HelloTonicClient;
 use anyhow::{Context, Result};
-use axum::{extract::Query, response::IntoResponse, routing::get, Router, Server};
+use axum::{
+    body::Body, extract::Query, http::Request, response::IntoResponse, routing::get, Router, Server,
+};
 #[cfg(feature = "proxy")]
 use axum::{extract::State, http::StatusCode};
+use opentelemetry::trace::TraceContextExt;
 use serde::Deserialize;
 use std::net::{IpAddr, SocketAddr};
 use tower::ServiceBuilder;
-use tower_http::trace::{DefaultMakeSpan, TraceLayer};
-use tracing::{debug, instrument, Level};
+use tower_http::trace::TraceLayer;
+use tracing::{debug, field, info_span, instrument, Span};
+use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -51,13 +55,14 @@ impl AppState {
 #[cfg(not(feature = "proxy"))]
 pub async fn run(config: Config) -> Result<()> {
     let app = Router::new().route("/", get(hello)).layer(
-        ServiceBuilder::new().layer(
-            TraceLayer::new_for_http().make_span_with(
-                DefaultMakeSpan::new()
-                    .level(Level::INFO)
-                    .include_headers(true),
-            ),
-        ),
+        ServiceBuilder::new()
+            .layer(
+                TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
+                    let headers = request.headers();
+                    info_span!("request", ?headers, trace_id = field::Empty)
+                }),
+            )
+            .map_request(record_trace_id),
     );
     spawn_server(app, &config.socket_addr()).await
 }
@@ -66,13 +71,14 @@ pub async fn run(config: Config) -> Result<()> {
 pub async fn run(config: Config, hello_tonic_client: HelloTonicClient) -> Result<()> {
     let state = AppState::new(hello_tonic_client);
     let app = Router::with_state(state).route("/", get(hello)).layer(
-        ServiceBuilder::new().layer(
-            TraceLayer::new_for_http().make_span_with(
-                DefaultMakeSpan::new()
-                    .level(Level::INFO)
-                    .include_headers(true),
-            ),
-        ),
+        ServiceBuilder::new()
+            .layer(
+                TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
+                    let headers = request.headers();
+                    info_span!("request", ?headers, trace_id = field::Empty)
+                }),
+            )
+            .map_request(record_trace_id),
     );
     spawn_server(app, &config.socket_addr()).await
 }
@@ -135,4 +141,13 @@ async fn proxy_response(
         Ok(text) => (StatusCode::OK, text),
         Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()),
     }
+}
+
+fn record_trace_id(request: Request<Body>) -> Request<Body> {
+    let span = Span::current();
+
+    let trace_id = span.context().span().span_context().trace_id();
+    span.record("trace_id", trace_id.to_string());
+
+    request
 }
