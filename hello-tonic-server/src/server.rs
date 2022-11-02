@@ -97,9 +97,9 @@ impl<'a> Extractor for HeaderExtractor<'a> {
     fn get(&self, key: &str) -> Option<&str> {
         self.0.get(key).and_then(|value| match value.to_str() {
             Ok(value) => Some(value),
-            Err(e) => {
+            Err(error) => {
                 error!(
-                    error = display(e),
+                    %error,
                     "Cannot convert header value to valid ASCII",
                 );
                 None

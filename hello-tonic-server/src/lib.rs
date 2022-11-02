@@ -19,17 +19,16 @@ pub struct Config {
 pub async fn run() -> Result<()> {
     // Load configuration
     let config = Config::load();
-    if let Err(e) = &config {
-        eprintln!("Cannot load configuration: {e} {:?}", e.source());
+    if let Err(error) = &config {
+        eprintln!("Cannot load configuration: {error} {:?}", error.source());
     };
     let config = config?;
-    let logged_config = config.clone();
 
     // Initialize tracing
-    init_tracing(config.init_tracing)?;
+    init_tracing(config.clone().init_tracing)?;
 
     // Log configuration
-    debug!(config = debug(&logged_config), "Starting");
+    debug!(?config, "Starting");
 
     // Run the server
     let server = server::run(config.server);

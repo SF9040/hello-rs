@@ -133,6 +133,6 @@ async fn proxy_response(
         .context("Cannot get response from hello-tonic")
     {
         Ok(text) => (StatusCode::OK, text),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")),
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()),
     }
 }

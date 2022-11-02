@@ -10,9 +10,9 @@ static GLOBAL: Jemalloc = Jemalloc;
 
 #[tokio::main]
 async fn main() {
-    if let Err(e) = hello_tonic_server::run().await {
+    if let Err(error) = hello_tonic_server::run().await {
         error!(
-            error = display(format!("{e:#}")),
+            error = format!("{error:#}"),
             "hello-tonic-server exited with ERROR"
         );
     };

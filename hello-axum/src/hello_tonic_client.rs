@@ -68,9 +68,9 @@ impl Injector for MetadataInjector<'_> {
                 Ok(value) => {
                     self.0.insert(name, value);
                 }
-                Err(e) => error!(error = display(e), "Cannot parse {value} as metadata value",),
+                Err(error) => error!(%error, "Cannot parse {value} as metadata value",),
             },
-            Err(e) => error!(error = display(e), "Cannot parse {key} as metadata value",),
+            Err(error) => error!(%error, "Cannot parse {key} as metadata value",),
         }
     }
 }

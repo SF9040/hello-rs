@@ -10,10 +10,7 @@ static GLOBAL: Jemalloc = Jemalloc;
 
 #[tokio::main]
 async fn main() {
-    if let Err(e) = hello_axum::run().await {
-        error!(
-            error = display(format!("{e:#}")),
-            "hello-axum exited with ERROR"
-        );
+    if let Err(error) = hello_axum::run().await {
+        error!(error = format!("{error:#}"), "hello-axum exited with ERROR");
     };
 }
