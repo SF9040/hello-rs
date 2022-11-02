@@ -33,7 +33,7 @@ RUST_LOG=hello_tonic_server=debug,tower_http=debug \
 To test the client use `grpcurl`:
 
 ```
-grpcurl -plaintext -import-path proto -proto hello.proto -d '{ "name": "Max" }' 127.0.0.1:80 hello.Hello.SayHello
+grpcurl -plaintext -import-path proto -proto hello.proto -d '{ "name": "Max" }' 127.0.0.1:90 hello.Hello.SayHello
 ```
 
 ## hello-tonic-client

@@ -22,7 +22,7 @@ use tonic::{
 };
 use tower::ServiceBuilder;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
-use tracing::{error, instrument, Span};
+use tracing::{error, instrument, Level, Span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 #[derive(Debug, Clone, Copy, Deserialize)]
@@ -47,8 +47,11 @@ pub async fn run(config: Config) -> Result<()> {
         .layer(
             ServiceBuilder::new()
                 .layer(
-                    TraceLayer::new_for_grpc()
-                        .make_span_with(DefaultMakeSpan::new().include_headers(true)),
+                    TraceLayer::new_for_grpc().make_span_with(
+                        DefaultMakeSpan::new()
+                            .level(Level::INFO)
+                            .include_headers(true),
+                    ),
                 )
                 .map_request(extract_trace_context),
         )
