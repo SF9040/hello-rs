@@ -33,7 +33,7 @@ RUST_LOG=hello_tonic_server=debug,tower_http=info \
 To test the client use `grpcurl`:
 
 ```
-grpcurl -plaintext -import-path proto -proto hello.proto -d '{ "name": "Max" }' 127.0.0.1:90 hello.Hello.SayHello
+grpcurl -plaintext -import-path hello-tonic-client/proto -proto hello.proto -d '{ "name": "Max" }' 127.0.0.1:90 hello.Hello.SayHello
 ```
 
 ## hello-tonic-client
@@ -44,6 +44,7 @@ Simple gPRC demo client built with [tonic](https://github.com/hyperium/tonic).
 
 ```
 CONFIG_DIR=hello-tonic-client/config \
+  APP__ENDPOINT=http://localhost:90 \
   cargo run -p hello-tonic-client
 ```
 

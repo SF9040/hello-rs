@@ -9,6 +9,7 @@ use axum::{extract::State, http::StatusCode};
 use opentelemetry::trace::TraceContextExt;
 use serde::Deserialize;
 use std::net::{IpAddr, SocketAddr};
+use tokio::task;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, field, info_span, instrument, Span};
@@ -64,30 +65,30 @@ pub async fn run(config: Config) -> Result<()> {
             )
             .map_request(record_trace_id),
     );
-    spawn_server(app, &config.socket_addr()).await
+    task::spawn(Server::bind(&config.socket_addr()).serve(app.into_make_service()))
+        .await
+        .map(|server_result| server_result.context("Server completed with error"))
+        .context("Server panicked")
+        .and_then(|r| r)
 }
 
 #[cfg(feature = "proxy")]
 pub async fn run(config: Config, hello_tonic_client: HelloTonicClient) -> Result<()> {
     let state = AppState::new(hello_tonic_client);
-    let app = Router::with_state(state).route("/", get(hello)).layer(
-        ServiceBuilder::new()
-            .layer(
-                TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
-                    let headers = request.headers();
-                    info_span!("request", ?headers, trace_id = field::Empty)
-                }),
-            )
-            .map_request(record_trace_id),
-    );
-    spawn_server(app, &config.socket_addr()).await
-}
-
-async fn spawn_server<S>(app: Router<S>, socket_addr: &SocketAddr) -> Result<()>
-where
-    S: Send + Sync + 'static,
-{
-    tokio::spawn(Server::bind(socket_addr).serve(app.into_make_service()))
+    let app = Router::new()
+        .route("/", get(hello))
+        .with_state(state)
+        .layer(
+            ServiceBuilder::new()
+                .layer(
+                    TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
+                        let headers = request.headers();
+                        info_span!("request", ?headers, trace_id = field::Empty)
+                    }),
+                )
+                .map_request(record_trace_id),
+        );
+    task::spawn(Server::bind(&config.socket_addr()).serve(app.into_make_service()))
         .await
         .map(|server_result| server_result.context("Server completed with error"))
         .context("Server panicked")

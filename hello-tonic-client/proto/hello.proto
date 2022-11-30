@@ -1,1 +1,14 @@
-../../hello-tonic-server/proto/hello.proto
+syntax = "proto3";
+package hello;
+
+service Hello {
+    rpc SayHello (HelloRequest) returns (HelloResponse);
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string text = 1;
+}

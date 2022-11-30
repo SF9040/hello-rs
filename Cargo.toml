@@ -13,7 +13,7 @@ documentation = "https://github.com/hseeberger/hello-rs"
 
 [workspace.dependencies]
 anyhow                = { version = "1" }
-axum                  = { version = "0.6.0-rc.2", features = [ "http2", "json" ] }
+axum                  = { version = "0.6.1", features = [ "http2", "json" ] }
 configured            = { version = "0" }
 futures               = { version = "0" }
 opentelemetry         = { version = "0", default-features = false, features = [ "rt-tokio" ] }
